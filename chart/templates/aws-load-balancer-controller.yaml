@@ -1,8 +1,49 @@
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: aws-load-balancer-controller-multi
+#   namespace: argocd
+#   finalizers:
+#   - resources-finalizer.argocd.argoproj.io
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/satveerkhurpa/eks-blueprints-add-ons-multi.git
+#     path: add-ons/aws-load-balancer-controller
+#     targetRevision: HEAD
+#     helm:
+#       values: |
+#         aws-load-balancer-controller:
+#           clusterName: spoke-cluster
+#           region: us-west-2
+#           serviceAccount:
+#             name: aws-load-balancer-controller-sa
+#             create: false
+#           createNamespace: true
+#           enable: true
+#           podDisruptionBudget:
+#             maxUnavailable: 1
+#           serviceAccountName: aws-load-balancer-controller-sa
+#   destination:
+#     server: https://798A9F6E0B2F5D2D306E03BA7207226B.gr7.us-west-2.eks.amazonaws.com
+#     namespace: kube-system
+#   syncPolicy:
+#     automated:
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+#     retry:
+#       limit: 1
+#       backoff:
+#         duration: 5s
+#         factor: 2
+#         maxDuration: 1m
+
 {{- if and (.Values.awsLoadBalancerController) (.Values.awsLoadBalancerController.enable) -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: aws-load-balancer-controller
+  name: aws-load-balancer-controller-spoke
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -22,7 +63,7 @@ spec:
             create: false
         {{- toYaml .Values.awsLoadBalancerController | nindent 10 }}
   destination:
-    server: https://kubernetes.default.svc
+    server: {{ .Values.destinationServer }}
     namespace: kube-system
   syncPolicy:
     automated:
